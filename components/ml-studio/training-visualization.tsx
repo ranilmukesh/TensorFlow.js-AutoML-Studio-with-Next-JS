@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Brain } from 'lucide-react';
+import { Brain, Zap } from 'lucide-react';
 
 interface TrainingVisualizationProps {
   currentEpoch: number;
@@ -13,18 +13,26 @@ interface TrainingVisualizationProps {
     loss: number;
     accuracy: number;
   };
+  isAutoML?: boolean;
+  autoMLProgress?: number;
 }
 
 export function TrainingVisualization({ 
   currentEpoch, 
   totalEpochs, 
-  metrics 
+  metrics,
+  isAutoML = false,
+  autoMLProgress = 0
 }: TrainingVisualizationProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    setProgress((currentEpoch / totalEpochs) * 100);
-  }, [currentEpoch, totalEpochs]);
+    if (isAutoML) {
+      setProgress(autoMLProgress);
+    } else {
+      setProgress((currentEpoch / totalEpochs) * 100);
+    }
+  }, [currentEpoch, totalEpochs, isAutoML, autoMLProgress]);
 
   return (
     <motion.div
@@ -34,12 +42,18 @@ export function TrainingVisualization({
     >
       <Card className="glass-morphism p-8">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold">Training Progress</h3>
+          <h3 className="text-xl font-semibold">
+            {isAutoML ? 'AutoML Progress' : 'Training Progress'}
+          </h3>
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           >
-            <Brain className="w-6 h-6 text-primary" />
+            {isAutoML ? (
+              <Zap className="w-6 h-6 text-primary" />
+            ) : (
+              <Brain className="w-6 h-6 text-primary" />
+            )}
           </motion.div>
         </div>
 
@@ -51,22 +65,35 @@ export function TrainingVisualization({
             </div>
             <Progress value={progress} />
             <p className="text-sm text-muted-foreground mt-2">
-              Epoch {currentEpoch} of {totalEpochs}
+              {isAutoML
+                ? `Trial ${currentEpoch} of ${totalEpochs}`
+                : `Epoch ${currentEpoch} of ${totalEpochs}`
+              }
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium">Loss</p>
+              <p className="text-sm font-medium">
+                {isAutoML ? 'Best Loss' : 'Loss'}
+              </p>
               <p className="text-2xl font-bold">{metrics.loss.toFixed(4)}</p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium">Accuracy</p>
+              <p className="text-sm font-medium">
+                {isAutoML ? 'Best Accuracy' : 'Accuracy'}
+              </p>
               <p className="text-2xl font-bold">
                 {(metrics.accuracy * 100).toFixed(2)}%
               </p>
             </div>
           </div>
+
+          {isAutoML && (
+            <div className="text-center text-sm text-muted-foreground">
+              AutoML is testing different model architectures and hyperparameters to find the best performing model.
+            </div>
+          )}
         </div>
       </Card>
     </motion.div>
